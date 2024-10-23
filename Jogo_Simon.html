@@ -6,16 +6,36 @@
     <title>Jogo Simon</title>
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #333;
-            color: white;
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 10px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+			justify-content: flex-start; /* Alinha o conteúdo ao topo */
+            height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+        }
+        nav {
+            background-color: #333;
+            color: white;
+            padding: 10px; /* Ajuste o preenchimento se necessário */
+            text-align: center;
+            width: 100%;
+            margin: 0; /* Remove margens do nav */
+        }
+        nav a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            display: inline-block;
+            padding: 10px 15px;
+        }
+        nav a:hover {
+            background-color: #555;
+        }
+        h2 {
+            padding: 20px;
         }
         .container {
             position: relative;
@@ -72,102 +92,111 @@
     </style>
 </head>
 <body>
-    <div class="container" id="game-container">
-        <div class="divider"></div>
-        <div class="divider-vertical"></div>
-        <button class="button green" id="green"></button>
-        <button class="button red" id="red"></button>
-        <button class="button yellow" id="yellow"></button>
-        <button class="button blue" id="blue"></button>
-    </div>
-    <button id="start-button">Iniciar Jogo</button>
-    <div id="score">Pontuação: 0</div>
-    
-    <!-- Adicione seus arquivos de som aqui -->
-    <audio id="sound-green" src="path/to/green-sound.mp3"></audio>
-    <audio id="sound-red" src="path/to/red-sound.mp3"></audio>
-    <audio id="sound-yellow" src="path/to/yellow-sound.mp3"></audio>
-    <audio id="sound-blue" src="path/to/blue-sound.mp3"></audio>
 
-    <script>
-        const buttons = document.querySelectorAll('.button');
-        const sequence = [];
-        let userSequence = [];
-        let level = 0;
-        let score = 0;
+<nav>
+    <a href="index.html">Início</a>
+    <a href="Jogo_Letras.html">Sopa de Letras</a>
+    <a href="Jogo_Mem.html">Memória</a>
+    <a href="Jogo_Simon.html">Simon</a>
+</nav>
+<p>
 
-        const sounds = [
-            document.getElementById('sound-green'),
-            document.getElementById('sound-red'),
-            document.getElementById('sound-yellow'),
-            document.getElementById('sound-blue')
-        ];
+<div class="container" id="game-container">
+    <div class="divider"></div>
+    <div class="divider-vertical"></div>
+    <button class="button green" id="green"></button>
+    <button class="button red" id="red"></button>
+    <button class="button yellow" id="yellow"></button>
+    <button class="button blue" id="blue"></button>
+</div>
+<button id="start-button">Iniciar Jogo</button>
+<div id="score">Ronda: 0</div>
 
-        function nextSequence() {
-            userSequence = [];
-            level++;
-            const randomIndex = Math.floor(Math.random() * 4);
-            sequence.push(randomIndex);
-            playSequence();
-        }
+<!-- Adicione seus arquivos de som aqui -->
+<audio id="sound-green" src="path/to/green-sound.mp3"></audio>
+<audio id="sound-red" src="path/to/red-sound.mp3"></audio>
+<audio id="sound-yellow" src="path/to/yellow-sound.mp3"></audio>
+<audio id="sound-blue" src="path/to/blue-sound.mp3"></audio>
 
-        function playSequence() {
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i >= sequence.length) {
-                    clearInterval(interval);
-                    return;
-                }
-                flashButton(sequence[i]);
-                playSound(sequence[i]);
-                i++;
-            }, 1000);
-        }
+<script>
+    const buttons = document.querySelectorAll('.button');
+    const sequence = [];
+    let userSequence = [];
+    let level = 0;
+    let score = 0;
 
-        function flashButton(index) {
-            const button = buttons[index];
-            button.classList.add('hidden');
-            setTimeout(() => {
-                button.classList.remove('hidden');
-            }, 500);
-        }
+    const sounds = [
+        document.getElementById('sound-green'),
+        document.getElementById('sound-red'),
+        document.getElementById('sound-yellow'),
+        document.getElementById('sound-blue')
+    ];
 
-        function playSound(index) {
-            sounds[index].currentTime = 0; // Reinicia o som
-            sounds[index].play(); // Toca o som correspondente
-        }
+    function nextSequence() {
+        userSequence = [];
+        level++;
+        const randomIndex = Math.floor(Math.random() * 4);
+        sequence.push(randomIndex);
+        playSequence();
+    }
 
-        buttons.forEach((button, index) => {
-            button.addEventListener('click', () => {
-                userSequence.push(index);
-                flashButton(index);
-                playSound(index);
-                checkSequence(userSequence.length - 1);
-            });
-        });
-
-        function checkSequence(index) {
-            if (userSequence[index] !== sequence[index]) {
-                alert('Você errou! Tente novamente.');
-                resetGame();
-            } else if (userSequence.length === sequence.length) {
-                score++;
-                document.getElementById('score').innerText = `Pontuação: ${score}`;
-                setTimeout(nextSequence, 1000);
+    function playSequence() {
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i >= sequence.length) {
+                clearInterval(interval);
+                return;
             }
-        }
+            flashButton(sequence[i]);
+            playSound(sequence[i]);
+            i++;
+        }, 1000);
+    }
 
-        function resetGame() {
-            sequence.length = 0;
-            level = 0;
-            score = 0;
-            document.getElementById('score').innerText = `Pontuação: ${score}`;
-        }
+    function flashButton(index) {
+        const button = buttons[index];
+        button.classList.add('hidden');
+        setTimeout(() => {
+            button.classList.remove('hidden');
+        }, 500);
+    }
 
-        document.getElementById('start-button').addEventListener('click', () => {
-            resetGame();
-            nextSequence();
+    function playSound(index) {
+        sounds[index].currentTime = 0; // Reinicia o som
+        sounds[index].play(); // Toca o som correspondente
+    }
+
+    buttons.forEach((button, index) => {
+        button.addEventListener('click', () => {
+            userSequence.push(index);
+            flashButton(index);
+            playSound(index);
+            checkSequence(userSequence.length - 1);
         });
-    </script>
+    });
+
+    function checkSequence(index) {
+        if (userSequence[index] !== sequence[index]) {
+            alert('Você errou! Tente novamente.');
+            resetGame();
+        } else if (userSequence.length === sequence.length) {
+            score++;
+            document.getElementById('score').innerText = `Pontuação: ${score}`;
+            setTimeout(nextSequence, 1000);
+        }
+    }
+
+    function resetGame() {
+        sequence.length = 0;
+        level = 0;
+        score = 0;
+        document.getElementById('score').innerText = `Pontuação: ${score}`;
+    }
+
+    document.getElementById('start-button').addEventListener('click', () => {
+        resetGame();
+        nextSequence();
+    });
+</script>
 </body>
 </html>
