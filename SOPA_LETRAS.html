@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Sopa de Letras</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease-in-out;
+            width: 90%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 24px;
+        }
+        #word-search {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-gap: 5px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .letter {
+            width: 100%;
+            padding-top: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            font-size: 2vw;
+            font-weight: bold;
+            color: #333;
+            background-color: #fafafa;
+            border-radius: 5px;
+        }
+        .letter span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .letter:hover {
+            background-color: #e0e0e0;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .selected {
+            background-color: #ffeb3b;
+            border: 3px solid rgb(255, 235, 59);
+        }
+        .correct {
+            color: #fff;
+            cursor: default;
+        }
+        .highlight {
+            border: 3px solid #ffeb3b;
+        }
+        .word-found {
+            text-decoration: line-through;
+            color: #4caf50;
+        }
+        #new-game {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        #new-game:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+        }
+        #animation {
+            display: none;
+            margin-top: 20px;
+            font-size: 18px;
+            color: green;
+            animation: fadeIn 1s ease-in-out;
+        }
+        #word-list {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #555;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 20px;
+            }
+            .letter {
+                font-size: 6vw;
+            }
+            #new-game {
+                font-size: 14px;
+            }
+            #animation {
+                font-size: 16px;
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes confetti {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100vh); }
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ffeb3b;
+            animation: confetti 3s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Jogo de Sopa de Letras</h1>
+        <div id="word-list"></div>
+        <div id="word-search"></div>
+        <button id="new-game">Novo Jogo</button>
+        <div id="animation">Parabéns! Você encontrou todas as palavras! Clique no botão para jogar novamente.</div>
+    </div>
+    <script>
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const wordSearch = document.getElementById('word-search');
+        const newGameButton = document.getElementById('new-game');
+        const animation = document.getElementById('animation');
+        const wordListDiv = document.getElementById('word-list');
+
+        const words = [
+            'CÃO', 'GATO', 'PÁSSARO', 'PEIXE', 'CARRO', 'MOTA', 'BICICLETA', 'CAMIÃO',
+            'MAÇÃ', 'BANANA', 'LARANJA', 'UVA', 'PORTUGAL', 'ESPANHA', 'FRANÇA', 'ALEMANHA',
+            'COMPUTADOR', 'TECLADO', 'RATO', 'MONITOR', 'CASA', 'APARTAMENTO', 'JANELA', 'PORTA',
+            'ESCOLA', 'PROFESSOR', 'ALUNO', 'LIVRO', 'SOL', 'LUA', 'ESTRELA', 'PLANETA',
+            'VERMELHO', 'AZUL', 'VERDE', 'AMARELO', 'CACHOEIRA', 'RIO', 'LAGO', 'MAR',
+            'PIZZA', 'HAMBÚRGUER', 'SALADA', 'SOPA', 'TELEMÓVEL', 'TABLET', 'PORTÁTIL',
+            'GUITARRA', 'PIANO', 'BATERIA', 'VIOLINO', 'FUTEBOL', 'BASQUETEBOL', 'TÉNIS', 'VOLEIBOL',
+            'INVERNO', 'VERÃO', 'OUTONO', 'PRIMAVERA', 'CARNE', 'FRANGO', 'PEIXE', 'PORCO',
+            'CINEMA', 'TEATRO', 'CONCERTO', 'ESPETÁCULO', 'AVIÃO', 'COMBOIO', 'BARCO', 'AUTOCARRO',
+            'CAFÉ', 'CHÁ', 'SUMO', 'ÁGUA', 'MONTANHA', 'VALE', 'DESERTO', 'FLORESTA',
+            'GESTÃO', 'CONTABILIDADE', 'FINANÇAS', 'ORÇAMENTO', 'INVESTIMENTO', 'LUCRO', 'PERDA', 'BALANÇO',
+            'EMOÇÃO', 'FELICIDADE', 'TRISTEZA', 'RAIVA', 'MEDO', 'SURPRESA', 'NOJO', 'AMOR',
+            'CAVALO', 'VACA', 'OVELHA', 'CABRA', 'GALINHA', 'PATO', 'GANSO', 'COELHO',
+            'ELEFANTE', 'LEÃO', 'TIGRE', 'URSO', 'LOBO', 'RAPOSA', 'CANGURU', 'GIRAFA',
+            'COMIDA', 'BEBIDA', 'FRUTA', 'LEGUME', 'DOCE', 'SALGADO', 'PICANTE', 'AMARGO',
+            'MÚSICA', 'DANÇA', 'PINTURA', 'ESCULTURA', 'TEATRO', 'CINEMA', 'LITERATURA', 'POESIA',
+            'CIÊNCIA', 'TECNOLOGIA', 'ENGENHARIA', 'MATEMÁTICA', 'FÍSICA', 'QUÍMICA', 'BIOLOGIA', 'ASTRONOMIA',
+            'POLÍTICA', 'ECONOMIA', 'SOCIOLOGIA', 'PSICOLOGIA', 'FILOSOFIA', 'HISTÓRIA', 'GEOGRAFIA', 'ANTROPOLOGIA',
+            'JARDIM', 'PARQUE', 'PRAIA', 'MONTANHA', 'RIO', 'LAGO', 'FLORESTA', 'DESERTO',
+            'VERDADE', 'MENTIRA', 'HONESTIDADE', 'ENGANO', 'LEALDADE', 'TRAIDOR', 'AMIZADE', 'INIMIZADE',
+            'TRABALHO', 'DESCANSO', 'LAZER', 'ESFORÇO', 'SUCESSO', 'FRACASSO', 'DEDICAÇÃO', 'PREGUIÇA', 'EQUIVOCO', 'ORDIMEIA', 'INFECCAO'
+        ];
+
+        const colors = ['#4caf50', '#ff5722', '#03a9f4', '#e91e63', '#ff9800'];
+
+        let selectedLetters = [];
+        let correctWords = [];
+        let maxWordLength = 0;
+        const foundWords = new Set();
+
+        function createNewGame() {
+            resetGame();
+            const selectedWords = getRandomWords(words, 5);
+            maxWordLength = Math.max(...selectedWords.map(word => word.length));
+            const grid = Array.from({ length: 10 }, () => Array(10).fill(''));
+
+            displayWordList(selectedWords);
+            placeWordsInGrid(grid, selectedWords);
+            fillGridWithRandomLetters(grid);
+        }
+
+        function resetGame() {
+            wordSearch.innerHTML = '';
+            wordListDiv.innerHTML = '';
+            animation.style.display = 'none';
+            selectedLetters = [];
+            correctWords = [];
+            foundWords.clear();
+        }
+
+        function getRandomWords(words, count) {
+            const shuffled = words.sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+
+        function displayWordList(words) {
+            words.forEach(word => {
+                const wordItem = document.createElement('div');
+                wordItem.textContent = word;
+                wordListDiv.appendChild(wordItem);
+            });
+        }
+
+        function placeWordsInGrid(grid, words) {
+            words.forEach(word => {
+                let placed = false;
+                while (!placed) {
+                    const direction = getRandomDirection();
+                    const row = Math.floor(Math.random() * 10);
+                    const col = Math.floor(Math.random() * 10);
+                    if (canPlaceWord(grid, word, row, col, direction)) {
+                        placeWord(grid, word, row, col, direction);
+                        placed = true;
+                    }
+                }
+            });
+        }
+
+        function fillGridWithRandomLetters(grid) {
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 10; j++) {
+                    if (grid[i][j] === '') {
+                        grid[i][j] = letters[Math.floor(Math.random() * letters.length)];
+                    }
+                    const letterDiv = createLetterDiv(grid[i][j]);
+                    wordSearch.appendChild(letterDiv);
+                }
+            }
+        }
+
+        function createLetterDiv(letter) {
+            const letterDiv = document.createElement('div');
+            letterDiv.className = 'letter';
+            letterDiv.innerHTML = `<span>${letter}</span>`;
+            letterDiv.addEventListener('mousedown', handleMouseDown);
+            letterDiv.addEventListener('mouseup', handleMouseUp);
+            letterDiv.addEventListener('click', selectLetter);
+            return letterDiv;
+        }
+
+        function getRandomDirection() {
+            const directions = ['H', 'V', 'D1', 'D2'];
+            return directions[Math.floor(Math.random() * directions.length)];
+        }
+
+        function canPlaceWord(grid, word, row, col, direction) {
+            if (direction === 'H' && col + word.length > 10) return false;
+            if (direction === 'V' && row + word.length > 10) return false;
+            if (direction === 'D1' && (row + word.length > 10 || col + word.length > 10)) return false;
+            if (direction === 'D2' && (row + word.length > 10 || col - word.length < -1)) return false;
+
+            for (let i = 0; i < word.length; i++) {
+                const r = direction === 'H' ? row : direction === 'V' ? row + i : direction === 'D1' ? row + i : row + i;
+                const c = direction === 'H' ? col + i : direction === 'V' ? col : direction === 'D1' ? col + i : col - i;
+                if (grid[r][c] !== '' && grid[r][c] !== word[i]) return false;
+            }
+            return true;
+        }
+
+        function placeWord(grid, word, row, col, direction) {
+            for (let i = 0; i < word.length; i++) {
+                const r = direction === 'H' ? row : direction === 'V' ? row + i : direction === 'D1' ? row + i : row + i;
+                const c = direction === 'H' ? col + i : direction === 'V' ? col : direction === 'D1' ? col + i : col - i;
+                grid[r][c] = word[i];
+            }
+        }
+
+        function selectLetter(event) {
+            const letterDiv = event.target.closest('.letter');
+            if (!letterDiv.classList.contains('selected')) {
+                if (selectedLetters.length < maxWordLength) {
+                    letterDiv.classList.add('selected');
+                    selectedLetters.push(letterDiv);
+                }
+            } else {
+                letterDiv.classList.remove('selected');
+                selectedLetters = selectedLetters.filter(letter => letter !== letterDiv);
+            }
+
+            if (selectedLetters.length >= 2) {
+                selectIntermediateLetters(selectedLetters[0], selectedLetters[selectedLetters.length - 1]);
+            } else {
+                checkWinCondition();
+            }
+        }
+
+        function handleMouseDown(event) {
+            const letterDiv = event.target.closest('.letter');
+            if (letterDiv.classList.contains('correct')) {
+                letterDiv.classList.add('highlight');
+            }
+        }
+
+        function handleMouseUp(event) {
+            const letterDiv = event.target.closest('.letter');
+            if (letterDiv.classList.contains('correct')) {
+                letterDiv.classList.remove('highlight');
+            }
+        }
+
+        function checkWinCondition() {
+            const selectedWords = Array.from(wordListDiv.children).map(div => div.textContent);
+            const selectedText = selectedLetters.map(letter => letter.textContent.trim()).join('');
+            const foundWord = selectedWords.find(word => {
+                const wordLetters = word.split('');
+                return wordLetters.every(letter => selectedText.includes(letter)) && wordLetters.length === selectedLetters.length;
+            });
+
+            if (foundWord && !foundWords.has(foundWord)) {
+                foundWords.add(foundWord);
+                const color = colors[correctWords.length % colors.length];
+                selectedLetters.forEach(letter => {
+                    letter.classList.remove('selected');
+                    letter.classList.add('correct');
+                    letter.style.backgroundColor = color;
+                });
+                correctWords.push(foundWord);
+                selectedLetters = [];
+
+                // Riscar a palavra na lista
+                const wordItem = Array.from(wordListDiv.children).find(div => div.textContent === foundWord);
+                if (wordItem) {
+                    wordItem.classList.add('word-found');
+                }
+            }
+
+            if (correctWords.length === selectedWords.length) {
+                animation.style.display = 'block';
+                showConfetti();
+                blockAllLetters();
+            }
+        }
+
+        function blockAllLetters() {
+            const allLetters = document.querySelectorAll('.letter');
+            allLetters.forEach(letter => {
+                letter.style.pointerEvents = 'none';
+            });
+        }
+
+        function showConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                document.body.appendChild(confetti);
+
+                setTimeout(() => {
+                    confetti.remove();
+                }, 3000);
+            }
+        }
+
+        function selectIntermediateLetters(start, end) {
+            const startIndex = Array.from(wordSearch.children).indexOf(start);
+            const endIndex = Array.from(wordSearch.children).indexOf(end);
+            const direction = getDirection(startIndex, endIndex);
+
+            if (direction) {
+                const step = direction.step;
+                for (let i = startIndex; i !== endIndex + step; i += step) {
+                    const letterDiv = wordSearch.children[i];
+                    if (!letterDiv.classList.contains('selected')) {
+                        letterDiv.classList.add('selected');
+                        selectedLetters.push(letterDiv);
+                    }
+                }
+                checkWinCondition();
+            }
+        }
+
+        function getDirection(startIndex, endIndex) {
+            const startRow = Math.floor(startIndex / 10);
+            const startCol = startIndex % 10;
+            const endRow = Math.floor(endIndex / 10);
+            const endCol = endIndex % 10;
+
+            if (startRow === endRow) return { step: 1 }; // Horizontal
+            if (startCol === endCol) return { step: 10 }; // Vertical
+            if (endRow - startRow === endCol - startCol) return { step: 11 }; // Diagonal down-right
+            if (endRow - startRow === startCol - endCol) return { step: 9 }; // Diagonal down-left
+
+            return null;
+        }
+
+        newGameButton.addEventListener('click', createNewGame);
+
+        // Inicializar o jogo na primeira carga
+        createNewGame();
+    </script>
+</body>
+</html>
